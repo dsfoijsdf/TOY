@@ -6,49 +6,41 @@ class Solution:
     def __init__(self, player_hand, opponent_hand):
         self.player = parse_hand(player_hand)
         self.opponent = parse_hand(opponent_hand)
-        self.player_hand_subsets = self.player.get_subsets()
-        self.opponent_hand_subsets = self.opponent.get_subsets()
+        self.states = {}        
+    
+    def get_available_actions(self, player, opponent):
+        player_actions = [('PASS', )] + player.get_actions()
+        available_actions = [player_action for player_action in player_actions if self.is_certainly_win(player, opponent, player_action)]
+        self.states[(encode_hand(player.hand), encode_hand(opponent.hand))] = available_actions
 
-        self.states = {(encode_hand(ph), encode_hand(oh)): [] for ph in self.player_hand_subsets for oh in self.opponent_hand_subsets}
-        
-    def is_certainly_win(self, player_hand, opponent_action, opponent):
+    def is_certainly_win(self, player, opponent, player_action):
+        player_left_hand = player.get_left(player_action)
+        if sum(player_left_hand) == 0:
+            return True
+        opponent_actions = opponent.get_actions(player_action)
+        for opponent_action in opponent_actions:
+            if not self._is_certainly_win(player_left_hand, opponent_action, opponent):
+                return False
+        return True
+    
+
+    def _is_certainly_win(self, player_hand, opponent_action, opponent):
         opponent_left_hand = opponent.get_left(opponent_action)
         if sum(opponent_left_hand) == 0:
             return False
-        available_actions = self.states[(encode_hand(player_hand), encode_hand(opponent_left_hand))]
+        encode_states = (encode_hand(player_hand), encode_hand(opponent_left_hand))
+        if encode_states not in self.states.keys():
+            self.get_available_actions(parse_hand(player_hand), parse_hand(opponent_left_hand))
+        
+        available_actions = self.states[encode_states]
         return any(action_cmp(action, opponent_action) for action in available_actions)
 
     def run(self):
         print("caculating...   ")
-        self.get_ans()
+        self.get_available_actions(self.player, self.opponent)
         self.show()
-        
-    def get_ans(self):
-        for player_hand in self.player_hand_subsets:
-            player = parse_hand(player_hand)
-            player_actions = [('PASS', )] + player.get_actions()
-            
-            for opponent_hand in self.opponent_hand_subsets:
-                opponent = parse_hand(opponent_hand)
-                
-                cur_state = self.states[(encode_hand(player_hand), encode_hand(opponent_hand))]
-                # player任意选择一个出牌动作
-                for player_action in player_actions:
-                    # player 手中剩下的牌
-                    player_left_hand = player.get_left(player_action)
-                    if sum(player_left_hand) == 0:
-                        cur_state.append(player_action)
-                        break
-                    # 在player选择player_action的情况下，opppnent可选的出牌动作
-                    opponent_actions = opponent.get_actions(player_action)
                     
-                    certainly_win = [self.is_certainly_win(player_left_hand, opponent_action, opponent) for opponent_action in opponent_actions]
-                    if all(certainly_win):
-                        cur_state.append(player_action)
-                    
-                        
-    
-    # 反向输出一条获胜路径（通过与玩家交互）
+    # 通过与玩家交互 反向输出一条获胜路径
     def show(self):
         player = self.player
         opponent = self.opponent
@@ -62,7 +54,7 @@ class Solution:
             print("can win action : ")
             available_actions = [action for action in cur_state if action_cmp(action, last_action)]
             for i, action in enumerate(available_actions):
-                print("    ({0}) : {1};".format(i+1, action))
+                print("    ({0}) : {1};".format(i+1, action2card(action)))
                     
             x = input("input your action id : ")
             player_action = available_actions[int(x)-1]
@@ -76,9 +68,9 @@ class Solution:
                 break
             
             opponent_actions = opponent.get_actions(player_action)
-            print("opp action : ")
+            print("opponent action : ")
             for i, action in enumerate(opponent_actions):
-                print("    ({0}) : {1};".format(i+1, action))
+                print("    ({0}) : {1};".format(i+1, action2card(action)))
             
             x = input("input opponent action id : ")
 
@@ -95,9 +87,8 @@ class Solution:
 
 if __name__ == "__main__":
     
-    shp = "2q999643"
-    sho = "daaj43"
+    shp = "aqqj9988653"
+    sho = "2kqjj095433"
 
     s = Solution(card2hand(shp), card2hand(sho))
-    s.get_ans()
-    s.show()
+    s.run()

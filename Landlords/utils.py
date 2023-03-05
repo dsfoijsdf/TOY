@@ -47,6 +47,7 @@ def card2hand(cards="2qq999643"):
        hand[c2i[c]] += 1
     return hand 
 
+
 def hand2card(hand=[0, 0, 1, 1, 1, 0, 1, 0, 0, 3, 0, 0, 2, 0, 0, 0]):
     cards = [0, 14, 15, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17]
     names = " a234567890jqkxd"
@@ -55,6 +56,75 @@ def hand2card(hand=[0, 0, 1, 1, 1, 0, 1, 0, 0, 3, 0, 0, 2, 0, 0, 0]):
     for idx in order:
         card += hand[idx] * names[idx]
     return card
+
+
+def action2hand(action):
+        if action[0] == "PASS":
+            return tuple([0 for _ in range(16)])
+        ans = [0 for _ in range(16)]
+        if action[0] == 'SINGLE':
+            ans[action[1]] += 1
+        elif action[0] == 'DOUBLE':
+            ans[action[1]] += 2
+        elif action[0] == 'THREE':
+            ans[action[1]] += 3
+        elif action[0] == 'FOUR':
+            ans[action[1]] += 4
+        elif action[0] == 'THREE ONE':
+            ans[action[1]] += 3
+            ans[action[2]] += 1
+        elif action[0] == 'THREE TWO':
+            ans[action[1]] += 3
+            ans[action[2]] += 2
+        elif action[0] == 'FOUR ONE':
+            ans[action[1]] += 4
+            ans[action[2]] += 1
+            ans[action[3]] += 1
+        elif action[0] == 'FOUR TWO':
+            ans[action[1]] += 4
+            ans[action[2]] += 2
+            ans[action[3]] += 2
+        elif action[0] == 'AIR':
+            ans[action[1]] += 3
+            ans[action[2]] += 3
+        elif action[0] == 'AIR ONE':
+            ans[action[1]] += 3
+            ans[action[2]] += 3
+            ans[action[3]] += 1
+            ans[action[4]] += 1
+        elif action[0] == 'AIR TWO':
+            ans[action[1]] += 3
+            ans[action[2]] += 3
+            ans[action[3]] += 2
+            ans[action[4]] += 2
+        elif action[0] == 'STRAIGHT':
+            end = -1
+            if action[2] == 1:
+                end = 14
+                ans[1] += 1
+            else:
+                end = action[2] + 1
+            for i in range(action[1], end):
+                ans[i] += 1
+        elif action[0] == 'DOUBLE STRAIGHT':
+            end = -1
+            if action[2] == 1:
+                end = 14
+                ans[1] += 1
+            else:
+                end = action[2] + 1
+            for i in range(action[1], end):
+                ans[i] += 2
+        elif action[0] == "KING":
+            ans[14] += 1
+            ans[15] += 1
+        return tuple(ans)
+
+
+def action2card(action):
+    if action[0] == "PASS":
+        return action
+    return hand2card(action2hand(action))
 
 if __name__ == "__main__":
     print(card2hand())
